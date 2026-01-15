@@ -3,36 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tracking Website</title>
+    <title>GPS Tracking Website</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         #tracker { margin-top: 20px; }
         ul { list-style-type: none; padding: 0; }
         li { background: #f4f4f4; margin: 5px 0; padding: 10px; border-radius: 5px; }
+        #map { height: 400px; width: 100%; margin-top: 20px; }
     </style>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
 </head>
 <body>
-    <h1>My Tracking Site</h1>
+    <h1>GPS Tracking Site</h1>
     <form id="addForm">
-        <input type="text" id="itemName" placeholder="Item Name (e.g., Package ID)" required>
-        <input type="text" id="status" placeholder="Status (e.g., In Transit)" required>
-        <button type="submit">Add Item</button>
+        <input type="text" id="itemName" placeholder="Device/Item Name (e.g., My Car)" required>
+        <input type="number" step="any" id="lat" placeholder="Latitude (e.g., 37.7749)" required>
+        <input type="number" step="any" id="lng" placeholder="Longitude (e.g., -122.4194)" required>
+        <input type="text" id="deviceId" placeholder="Device ID (optional)">
+        <button type="submit">Add Location</button>
     </form>
     <div id="tracker">
-        <h2>Tracked Items</h2>
+        <h2>Tracked Locations</h2>
         <ul id="itemList"></ul>
     </div>
+    <div id="map"></div>
 
     <script>
-        const form = document.getElementById('addForm');
-        const itemList = document.getElementById('itemList');
+        let map;
+        let markers = [];
         let items = JSON.parse(localStorage.getItem('trackedItems')) || [];
 
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 0, lng: 0 },
+                zoom: 2
+            });
+            renderItems();
+        }
+
         function renderItems() {
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
             itemList.innerHTML = '';
+
             items.forEach((item, index) => {
                 const li = document.createElement('li');
-                li.textContent = `${item.name}: ${item.status}`;
+                li.textContent = `${item.name}: Lat ${item.lat}, Lng ${item.lng}`;
+                if (item.deviceId) li.textContent += ` (ID: ${item.deviceId})`;
+
+                const marker = new google.maps.Marker({
+                    position: { lat: parseFloat(item.lat), lng: parseFloat(item.lng) },
+                    map: map,
+                    title: item.name
+                });
+                markers.push(marker);
+
                 const deleteBtn = document.createElement('button');
                 deleteBtn.textContent = 'Delete';
                 deleteBtn.onclick = () => {
@@ -45,17 +70,19 @@
             });
         }
 
-        form.addEventListener('submit', (e) => {
+        document.getElementById('addForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const name = document.getElementById('itemName').value;
-            const status = document.getElementById('status').value;
-            items.push({ name, status });
+            const lat = document.getElementById('lat').value;
+            const lng = document.getElementById('lng').value;
+            const deviceId = document.getElementById('deviceId').value;
+            items.push({ name, lat, lng, deviceId });
             localStorage.setItem('trackedItems', JSON.stringify(items));
             renderItems();
-            form.reset();
+            document.getElementById('addForm').reset();
         });
 
-        renderItems();
+        window.onload = initMap;
     </script>
 </body>
 </html>
