@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracking Website</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #tracker { margin-top: 20px; }
+        ul { list-style-type: none; padding: 0; }
+        li { background: #f4f4f4; margin: 5px 0; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>My Tracking Site</h1>
+    <form id="addForm">
+        <input type="text" id="itemName" placeholder="Item Name (e.g., Package ID)" required>
+        <input type="text" id="status" placeholder="Status (e.g., In Transit)" required>
+        <button type="submit">Add Item</button>
+    </form>
+    <div id="tracker">
+        <h2>Tracked Items</h2>
+        <ul id="itemList"></ul>
+    </div>
+
+    <script>
+        const form = document.getElementById('addForm');
+        const itemList = document.getElementById('itemList');
+        let items = JSON.parse(localStorage.getItem('trackedItems')) || [];
+
+        function renderItems() {
+            itemList.innerHTML = '';
+            items.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.textContent = `${item.name}: ${item.status}`;
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = () => {
+                    items.splice(index, 1);
+                    localStorage.setItem('trackedItems', JSON.stringify(items));
+                    renderItems();
+                };
+                li.appendChild(deleteBtn);
+                itemList.appendChild(li);
+            });
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('itemName').value;
+            const status = document.getElementById('status').value;
+            items.push({ name, status });
+            localStorage.setItem('trackedItems', JSON.stringify(items));
+            renderItems();
+            form.reset();
+        });
+
+        renderItems();
+    </script>
+</body>
+</html>
